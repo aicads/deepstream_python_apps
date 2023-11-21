@@ -23,6 +23,7 @@
 #include <pybind11/stl.h>
 #include <vector>
 #include <cstring>
+
 namespace py = pybind11;
 
 namespace pydeepstream {
@@ -30,10 +31,10 @@ namespace pydeepstream {
     void * copy_custom_struct(void* data, void* user_data) {
         NvDsUserMeta * srcMeta = (NvDsUserMeta*) data;
         NvDsInferFaceLandmarkMeta * srcData = (NvDsInferFaceLandmarkMeta *) srcMeta->user_meta_data;
-        NvDsInferFaceLandmarkMeta *destData = new NvDsInferFaceLandmarkMeta;
+        NvDsInferFaceLandmarkMeta *destData = (NvDsInferFaceLandmarkMeta *) malloc(sizeof(NvDsInferFaceLandmarkMeta));
 
         destData->num_landmark = srcData->num_landmark;
-        destData->data = new float[srcData->num_landmark * 2];
+        destData->data = (float*) malloc(srcData->num_landmark * 2 * sizeof(float));
         memcpy(destData->data, srcData->data, srcData->num_landmark * 2 * sizeof(float));
 
         return destData;
@@ -45,9 +46,9 @@ namespace pydeepstream {
             NvDsInferFaceLandmarkMeta * srcData = (NvDsInferFaceLandmarkMeta *) srcMeta->user_meta_data;
             if (srcData != nullptr) {
                 if (srcData->data != nullptr) {
-                    delete[] srcData->data;
+                    free(srcData->data);
                 }
-                delete srcData;
+                free(srcData);
             }
         }
     }
@@ -60,12 +61,12 @@ namespace pydeepstream {
                  return (NvDsInferFaceLandmarkMeta *) data;
              }, py::return_value_policy::reference)
             .def("set_landmark_data", [](NvDsInferFaceLandmarkMeta &meta, const std::vector<float> &landmarks) {
-                if (meta.data) {
+                if (meta.data != nullptr) {
                     std::cout << "freeing meta.data" << std::endl;
-                    delete[] meta.data; // 메모리 해제
+                    free(meta.data); // 메모리 해제
                 }
                 std::cout << "landmarks.size(): " << landmarks.size() << std::endl;
-                meta.data = new float[landmarks.size()];
+                meta.data = (float*) malloc(landmarks.size() * sizeof(float));
                 std::copy(landmarks.begin(), landmarks.end(), meta.data);
             })
             .def("get_landmark_data", [](const NvDsInferFaceLandmarkMeta &meta) {
@@ -74,7 +75,7 @@ namespace pydeepstream {
 
         m.def("alloc_custom_struct",
               [](NvDsUserMeta *meta) {
-                  auto *mem = new NvDsInferFaceLandmarkMeta;
+                  auto *mem = (NvDsInferFaceLandmarkMeta *) malloc(sizeof(NvDsInferFaceLandmarkMeta));
                   meta->base_meta.copy_func = (NvDsMetaCopyFunc) pydeepstream::copy_custom_struct;
                   meta->base_meta.release_func = (NvDsMetaReleaseFunc) pydeepstream::release_custom_struct;
                   return mem;
