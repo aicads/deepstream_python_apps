@@ -64,12 +64,11 @@ namespace pydeepstream {
                 if (meta.data) {
                     free(meta.data);
                 }
-                meta.size = landmarks.size();
-                meta.data = new float[meta.size];
+                meta.data = new float[landmarks.size()];
                 std::copy(landmarks.begin(), landmarks.end(), meta.data);
             })
             .def("get_landmark_data", [](const NvDsInferFaceLandmarkMeta &meta) {
-                return std::vector<float>(meta.data, meta.data + meta.size);
+                return std::vector<float>(meta.data, meta.data + meta.num_landmark * 2);
             });
 
         m.def("alloc_custom_struct",
