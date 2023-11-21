@@ -43,9 +43,9 @@ namespace pydeepstream {
         if (srcMeta != nullptr) {
             NvDsInferFaceLandmarkMeta * srcData = (NvDsInferFaceLandmarkMeta *) srcMeta->user_meta_data;
             if (srcData != nullptr) {
-                if (srcData->message != nullptr)
+                if (srcData->data != nullptr)
                 {
-                    free(srcData->message);
+                    free(srcData->data);
                 }
                 g_free(srcData);
             }
