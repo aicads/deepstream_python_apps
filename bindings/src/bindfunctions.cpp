@@ -744,6 +744,13 @@ namespace pydeepstream {
               },
               py::return_value_policy::reference);
 
+        m.def("get_detections_i",
+              [](void *data, int i) {
+                  const auto *detections = (const int *) (data);
+                  return detections[i];
+              },
+              py::return_value_policy::reference);
+
         m.def("get_optical_flow_vectors",
               [](void *data) {
                   auto *META = (NvDsOpticalFlowMeta *) data;
