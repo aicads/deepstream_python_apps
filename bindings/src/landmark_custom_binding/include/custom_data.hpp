@@ -22,7 +22,6 @@
 using namespace std;
 
 struct NvDsInferFaceLandmarkMeta {
-  gfloat *data;
-  guint size;
-  guint num_landmark;
+  float *data;
+  int num_landmark; 
 };

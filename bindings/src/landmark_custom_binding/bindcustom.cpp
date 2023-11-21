@@ -15,11 +15,14 @@
  * limitations under the License.
  */
 
-// CustomDataStruct
+// NvDsInferFaceLandmarkMeta
 
 #include "bind_string_property_definitions.h"
 #include "include/bindcustom.hpp"
-
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <vector>
+#include <cstring>
 namespace py = pybind11;
 
 namespace pydeepstream {
@@ -27,13 +30,11 @@ namespace pydeepstream {
     void * copy_custom_struct(void* data, void* user_data) {
         NvDsUserMeta * srcMeta = (NvDsUserMeta*) data;
         NvDsInferFaceLandmarkMeta * srcData = (NvDsInferFaceLandmarkMeta *) srcMeta->user_meta_data;
-        NvDsInferFaceLandmarkMeta *destData = (NvDsInferFaceLandmarkMeta *) g_malloc0(
-                        sizeof(NvDsInferFaceLandmarkMeta));
+        NvDsInferFaceLandmarkMeta *destData = (NvDsInferFaceLandmarkMeta *) g_malloc0(sizeof(NvDsInferFaceLandmarkMeta));
 
-        destData->size = srcData->size;
         destData->num_landmark = srcData->num_landmark;
-        destData->data = (gfloat*)g_malloc(srcData->size);
-        memcpy(destData->data, srcData->data, srcData->size);
+        destData->data = (float*)g_malloc(srcData->num_landmark * 2 * sizeof(float));
+        memcpy(destData->data, srcData->data, srcData->num_landmark * 2 * sizeof(float));
 
         return destData;
     }
@@ -43,8 +44,7 @@ namespace pydeepstream {
         if (srcMeta != nullptr) {
             NvDsInferFaceLandmarkMeta * srcData = (NvDsInferFaceLandmarkMeta *) srcMeta->user_meta_data;
             if (srcData != nullptr) {
-                if (srcData->data != nullptr)
-                {
+                if (srcData->data != nullptr) {
                     free(srcData->data);
                 }
                 g_free(srcData);
@@ -55,12 +55,22 @@ namespace pydeepstream {
     void bindcustom(py::module &m) {
         py::class_<NvDsInferFaceLandmarkMeta>(m, "NvDsInferFaceLandmarkMeta")
             .def(py::init<>())
-            .def_readwrite("data", &NvDsInferFaceLandmarkMeta::data)
-            .def_readwrite("size", &NvDsInferFaceLandmarkMeta::size)
+
             .def_readwrite("num_landmark", &NvDsInferFaceLandmarkMeta::num_landmark)
             .def("cast", [](void *data) {
                  return (NvDsInferFaceLandmarkMeta *) data;
-             }, py::return_value_policy::reference);
+             }, py::return_value_policy::reference)
+            .def("set_landmark_data", [](NvDsInferFaceLandmarkMeta &meta, const std::vector<float> &landmarks) {
+                if (meta.data) {
+                    free(meta.data);
+                }
+                meta.size = landmarks.size();
+                meta.data = new float[meta.size];
+                std::copy(landmarks.begin(), landmarks.end(), meta.data);
+            })
+            .def("get_landmark_data", [](const NvDsInferFaceLandmarkMeta &meta) {
+                return std::vector<float>(meta.data, meta.data + meta.size);
+            });
 
         m.def("alloc_custom_struct",
               [](NvDsUserMeta *meta) {
