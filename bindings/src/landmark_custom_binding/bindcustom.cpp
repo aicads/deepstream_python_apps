@@ -61,10 +61,6 @@ namespace pydeepstream {
                  return (NvDsInferFaceLandmarkMeta *) data;
              }, py::return_value_policy::reference)
             .def("set_landmark_data", [](NvDsInferFaceLandmarkMeta &meta, const std::vector<float> &landmarks) {
-                if (meta.data != nullptr) {
-                    std::cout << "freeing meta.data" << std::endl;
-                    free(meta.data); // 메모리 해제
-                }
                 std::cout << "landmarks.size(): " << landmarks.size() << std::endl;
                 meta.data = (float*) malloc(landmarks.size() * sizeof(float));
                 std::copy(landmarks.begin(), landmarks.end(), meta.data);
